@@ -119,7 +119,7 @@ def process():
         
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            status = f'<span class="success">Completed: Output saved to {output_path}</span>'
+            status = f'<span class="success">Completed: Output saved to {OUTPUT_DIR}</span>'
         except subprocess.CalledProcessError as e:
             status = f'<span class="error">Error during processing: {e.stderr}</span>'
         
