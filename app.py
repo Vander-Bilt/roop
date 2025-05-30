@@ -2,7 +2,6 @@ from flask import Flask, request, render_template, jsonify, flash, redirect, url
 import os
 import subprocess
 import requests
-import tempfile
 import shutil
 import threading
 from uuid import uuid4
@@ -101,34 +100,37 @@ def process():
     target_video_url = request.form['target_video']
     task_id = str(uuid4())
     
-    # Create a temporary directory for this request
-    temp_dir = tempfile.mkdtemp()
-    
     # Initialize status
     processing_status[task_id] = 'Processing...'
     
     def run_processing():
         try:
-            # Download source image
-            source_image_path = os.path.join(temp_dir, f'source_{uuid4()}.jpg')
+            # Download source image to /kaggle/working
+            source_image_filename = f'source_{uuid4()}.jpg'
+            source_image_path = os.path.join(OUTPUT_DIR, source_image_filename)
             response = requests.get(source_image_url, stream=True)
             if response.status_code == 200:
                 with open(source_image_path, 'wb') as f:
                     shutil.copyfileobj(response.raw, f)
             else:
                 processing_status[task_id] = f'Error: Failed to download source image'
-                shutil.rmtree(temp_dir)
+                if os.path.exists(source_image_path):
+                    os.remove(source_image_path)
                 return
             
-            # Download target video
-            target_video_path = os.path.join(temp_dir, f'target_{uuid4()}.mp4')
+            # Download target video to /kaggle/working
+            target_video_filename = f'target_{uuid4()}.mp4'
+            target_video_path = os.path.join(OUTPUT_DIR, target_video_filename)
             response = requests.get(target_video_url, stream=True)
             if response.status_code == 200:
                 with open(target_video_path, 'wb') as f:
                     shutil.copyfileobj(response.raw, f)
             else:
                 processing_status[task_id] = f'Error: Failed to download target video'
-                shutil.rmtree(temp_dir)
+                if os.path.exists(source_image_path):
+                    os.remove(source_image_path)
+                if os.path.exists(target_video_path):
+                    os.remove(target_video_path)
                 return
             
             # Define output path in /kaggle/working
@@ -154,12 +156,19 @@ def process():
             except subprocess.CalledProcessError as e:
                 processing_status[task_id] = f'Error during processing: {e.stderr}'
             
-            # Clean up temporary directory
-            shutil.rmtree(temp_dir)
+            # Clean up temporary files (source and target)
+            if os.path.exists(source_image_path):
+                os.remove(source_image_path)
+            if os.path.exists(target_video_path):
+                os.remove(target_video_path)
         
         except Exception as e:
             processing_status[task_id] = f'Unexpected error: {str(e)}'
-            shutil.rmtree(temp_dir)
+            # Clean up in case of error
+            if os.path.exists(source_image_path):
+                os.remove(source_image_path)
+            if os.path.exists(target_video_path):
+                os.remove(target_video_path)
 
     # Start processing in a separate thread
     threading.Thread(target=run_processing, daemon=True).start()
