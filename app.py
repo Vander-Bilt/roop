@@ -101,8 +101,8 @@ def process():
             return render_template('index.html', status=status)
         
         # Define output path in /kaggle/working
-        output_filename = f'output_{uuid4()}.mp4'
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        # output_filename = f'output_{uuid4()}.mp4'
+        # output_path = os.path.join(OUTPUT_DIR, output_filename)
         
         # Execute the run.py script synchronously
         python_bin = '/usr/local/envs/py310/bin/python'
@@ -113,7 +113,7 @@ def process():
             '--execution-threads', '4',
             '-s', source_image_path,
             '-t', target_video_path,
-            '-o', output_path,
+            '-o', OUTPUT_DIR,
             '--frame-processor', 'face_swapper'
         ]
         
