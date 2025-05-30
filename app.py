@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template
 import os
 import subprocess
 import requests
@@ -85,15 +85,16 @@ def process():
                 os.remove(source_image_path)
             return render_template('index.html', status=status)
         
-        # Download target video to /kaggle/working
+        # Download target video to /kaggle/working using wget
         target_video_filename = f'target_{uuid4()}.mp4'
         target_video_path = os.path.join(OUTPUT_DIR, target_video_filename)
-        response = requests.get(target_video_url, stream=True)
-        if response.status_code == 200:
-            with open(target_video_path, 'wb') as f:
-                shutil.copyfileobj(response.raw, f)
-        else:
-            status = '<span class="error">Error: Failed to download target video</span>'
+        try:
+            subprocess.run(
+                ['wget', '-O', target_video_path, target_video_url],
+                check=True, capture_output=True, text=True
+            )
+        except subprocess.CalledProcessError as e:
+            status = f'<span class="error">Error downloading target video: {e.stderr}</span>'
             if os.path.exists(source_image_path):
                 os.remove(source_image_path)
             if os.path.exists(target_video_path):
@@ -101,8 +102,8 @@ def process():
             return render_template('index.html', status=status)
         
         # Define output path in /kaggle/working
-        # output_filename = f'output_{uuid4()}.mp4'
-        # output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_filename = f'output_{uuid4()}.mp4'
+        output_path = os.path.join(OUTPUT_DIR, output_filename)
         
         # Execute the run.py script synchronously
         python_bin = '/usr/local/envs/py310/bin/python'
@@ -113,29 +114,29 @@ def process():
             '--execution-threads', '4',
             '-s', source_image_path,
             '-t', target_video_path,
-            '-o', OUTPUT_DIR,
+            '-o', output_path,
             '--frame-processor', 'face_swapper'
         ]
         
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            status = f'<span class="success">Completed: Output saved to {OUTPUT_DIR}</span>'
+            status = f'<span class="success">Completed: Output saved to {output_path}</span>'
         except subprocess.CalledProcessError as e:
             status = f'<span class="error">Error during processing: {e.stderr}</span>'
         
         # Clean up temporary files (source and target)
-        # if os.path.exists(source_image_path):
-        #     os.remove(source_image_path)
-        # if os.path.exists(target_video_path):
-        #     os.remove(target_video_path)
+        if os.path.exists(source_image_path):
+            os.remove(source_image_path)
+        if os.path.exists(target_video_path):
+            os.remove(target_video_path)
         
     except Exception as e:
         status = f'<span class="error">Unexpected error: {str(e)}</span>'
         # Clean up in case of error
-        # if os.path.exists(source_image_path):
-        #     os.remove(source_image_path)
-        # if os.path.exists(target_video_path):
-        #     os.remove(target_video_path)
+        if os.path.exists(source_image_path):
+            os.remove(source_image_path)
+        if os.path.exists(target_video_path):
+            os.remove(target_video_path)
     
     return render_template('index.html', status=status)
 
