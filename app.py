@@ -123,6 +123,13 @@ def process():
             status = f'<span class="success">Completed: Output saved to {output_path}</span>'
         except subprocess.CalledProcessError as e:
             status = f'<span class="error">Error during processing: {e.stderr}</span>'
+
+
+        try:
+            result = subprocess.run(['huggingface-cli','upload','mmmgo/mydataset',output_path,output_filename,'--repo-type','dataset'], capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            status = f'<span class="error">Error during processing: {e.stderr}</span>'
+        
         
         # Clean up temporary files (source and target)
         if os.path.exists(source_image_path):
