@@ -223,6 +223,7 @@ def process():
             status = f'<span class="error">Error during processing: {e.stderr}<br>Stdout: {e.stdout}</span>'
 
         # Upload to Hugging Face dataset
+        # TODO 看到上传到huggingface成功了，但是前端显示错误：Output file not found for upload.
         if os.path.exists(output_path):
             try:
                 upload_cmd = ['huggingface-cli', 'upload', 'mmmgo/mydataset', output_path, os.path.basename(output_path), '--repo-type', 'dataset']
