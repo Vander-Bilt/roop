@@ -184,6 +184,7 @@ def process():
         elif target_video_url:
             target_video_filename = f'target_{uuid4()}.mp4'
             target_video_path = os.path.join(OUTPUT_DIR, target_video_filename)
+            # 这里要用wget下载，不知道为啥，用requests方式下载的文件有问题。
             success, error_msg = download_video_with_wget(target_video_url, target_video_path)
             if not success:
                 status = f'<span class="error">{error_msg}</span>'
