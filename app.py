@@ -4,8 +4,6 @@ import subprocess
 import requests
 import shutil
 from uuid import uuid4
-import time
-
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'  # Needed for flash messages
@@ -224,9 +222,6 @@ def process():
         except subprocess.CalledProcessError as e:
             status = f'<span class="error">Error during processing: {e.stderr}<br>Stdout: {e.stdout}</span>'
 
-        # Add a short delay
-        time.sleep(1) # Wait for 1 second
-    
         # Upload to Hugging Face dataset
         # TODO 看到上传到huggingface成功了，但是前端显示错误：Output file not found for upload.
         if os.path.exists(output_path):
