@@ -119,8 +119,8 @@ os.makedirs(TEMPLATES_DIR, exist_ok=True)
 with open(os.path.join(TEMPLATES_DIR, 'index.html'), 'w') as f:
     f.write(HTML_TEMPLATE)
 
-def download_file(url, destination_path):
-    """Helper function to download a file from a URL."""
+def download_image_with_requests(url, destination_path):
+    """Helper function to download an image from a URL using requests."""
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
@@ -128,7 +128,21 @@ def download_file(url, destination_path):
             shutil.copyfileobj(response.raw, f)
         return True, ""
     except requests.exceptions.RequestException as e:
-        return False, f"Failed to download from URL: {e}"
+        return False, f"Failed to download image from URL: {e}"
+
+def download_video_with_wget(url, destination_path):
+    """Helper function to download a video from a URL using wget."""
+    try:
+        subprocess.run(
+            ['wget', '-O', destination_path, url],
+            check=True, capture_output=True, text=True
+        )
+        return True, ""
+    except subprocess.CalledProcessError as e:
+        return False, f"Error downloading target video with wget: {e.stderr}<br>Stdout: {e.stdout}"
+    except FileNotFoundError:
+        return False, "wget command not found. Please ensure wget is installed and in your PATH."
+
 
 @app.route('/')
 def index():
@@ -154,7 +168,7 @@ def process():
         elif source_image_url:
             source_image_filename = f'source_{uuid4()}.jpg'
             source_image_path = os.path.join(OUTPUT_DIR, source_image_filename)
-            success, error_msg = download_file(source_image_url, source_image_path)
+            success, error_msg = download_image_with_requests(source_image_url, source_image_path)
             if not success:
                 status = f'<span class="error">{error_msg}</span>'
                 return render_template('index.html', status=status)
@@ -170,7 +184,7 @@ def process():
         elif target_video_url:
             target_video_filename = f'target_{uuid4()}.mp4'
             target_video_path = os.path.join(OUTPUT_DIR, target_video_filename)
-            success, error_msg = download_file(target_video_url, target_video_path)
+            success, error_msg = download_video_with_wget(target_video_url, target_video_path)
             if not success:
                 status = f'<span class="error">{error_msg}</span>'
                 # Clean up source image if it was downloaded/uploaded
