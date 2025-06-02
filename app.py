@@ -4,7 +4,7 @@ import shutil
 from uuid import uuid4
 import subprocess
 import os
-
+import time
 
 
 # Assume you have a processing function that receives image and video paths
@@ -62,7 +62,11 @@ def process_media(image_path, video_path):
     ]
     
     try:
+        start_time = time.time()
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"Processing took {time.time() - start_time} seconds")
+
+        
         print(f'Completed: Output saved to {output_path}')
     except subprocess.CalledProcessError as e:
         print(f'Error during processing: {e.stderr}Stdout: {e.stdout}')
@@ -89,5 +93,5 @@ demo = gr.Interface(
 
 # Launch Gradio application
 print("启动 Gradio 应用...")
-demo.launch(share=True, server_port=7860)
+demo.launch(share=True, server_port=7860, allowed_paths=["/kaggle/working/outputs"], debug=True)   # debug=True,便于定位问题！！
 print("Gradio 应用已启动，请等待公共链接显示。")
