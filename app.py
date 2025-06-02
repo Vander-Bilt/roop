@@ -1,4 +1,3 @@
-
 import gradio as gr
 import os
 import shutil
@@ -6,17 +5,7 @@ from uuid import uuid4
 import subprocess
 import os
 
-def startNewFrpc(random_integer):
-    !cp /kaggle/input/newfrpc/frpc /kaggle/working/frpc
-    !cp /kaggle/input/newfrpc/frpc.toml /kaggle/working/frpc.toml
-    subprocess.Popen(["sed", "-i", f"s/web/swapit/g", "/kaggle/working/frpc.toml"],shell=False)
-    subprocess.Popen(["sed", "-i", f"s/7860/{random_integer}/g", "/kaggle/working/frpc.toml"],shell=False)
-    #subprocess.Popen(["sed", "-i", f"s/7627/7625/g", "/kaggle/working/frpc.toml"],shell=False)
 
-    subprocess.run(['chmod', '+x', '/kaggle/working/frpc'], check=True)
-    !sleep 3
-    subprocess.Popen(['/kaggle/working/frpc', '-c', '/kaggle/working/frpc.toml'])
-    print(f'新frp已经启动')
 
 # Assume you have a processing function that receives image and video paths
 def process_media(image_path, video_path):
@@ -37,6 +26,7 @@ def process_media(image_path, video_path):
     OUTPUT_DIR = "/kaggle/working/outputs"
     input_dir = "/kaggle/working/inputs"
     os.makedirs(input_dir, exist_ok=True) # exist_ok=True prevents an error if the directory already exists
+    os.makedirs(OUTPUT_DIR, exist_ok=True) # exist_ok=True prevents an error if the directory already exists
 
     # --- Save the uploaded files to the desired directory ---
     # Get just the filename from the full path provided by Gradio
@@ -80,10 +70,6 @@ def process_media(image_path, video_path):
 
     return output_path
 
-
-# Start rpc
-random_integer = 7860
-startNewFrpc(random_integer)
 
 # Create Gradio interface
 # inputs parameter is a list, corresponding to the order of your function parameters
